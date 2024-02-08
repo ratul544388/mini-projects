@@ -1,21 +1,31 @@
 "use client";
-import O from "@/components/o";
-import X from "@/components/x";
-import { useConfettiStore } from "@/hooks/use-confetti-store";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { motion, useAnimation } from "framer-motion";
 
-export default function Home() {
-  const confetti = useConfettiStore();
-  const [currentTurn, setCurrentTurn] = useState<"X" | "O">("X");
-  const [status, setStatus] = useState<"X_WON" | "O_WON" | "DRAW">();
-  type ItemType = "X" | "O";
-  const [filledItems, setFilledItems] = useState<ItemType[]>(
-    Array(9).fill(undefined)
-  );
+type TurnType = "X" | "O";
 
-  const winConditions = useMemo(() => {
-    return [
+const Page = () => {
+  const animation = useAnimation();
+  const [turn, setTurn] = useState<TurnType>("X");
+  const [winner, setWinner] = useState<TurnType | "Draw">();
+  const initialBoxes: (TurnType | undefined)[] = Array(9).fill(undefined);
+  const [filledBox, setFilledBox] = useState(initialBoxes);
+  const [lineIndex, setLineIndex] = useState<number>();
+
+  const handleClick = (index: number) => {
+    if (filledBox[index] || winner) return;
+    setTurn(turn === "X" ? "O" : "X");
+    setFilledBox((prev) => {
+      const newFilledBox = [...prev];
+      newFilledBox[index] = turn;
+      return newFilledBox;
+    });
+  };
+
+  useEffect(() => {
+    const winCondition = [
       [0, 1, 2],
       [3, 4, 5],
       [6, 7, 8],
@@ -25,95 +35,149 @@ export default function Home() {
       [0, 4, 8],
       [2, 4, 6],
     ];
-  }, []);
+
+    winCondition.some((condition, index) => {
+      if (condition.every((item) => filledBox[item] === "X")) {
+        setWinner("X");
+        setLineIndex(index);
+      } else if (condition.every((item) => filledBox[item] === "O")) {
+        setWinner("O");
+        setLineIndex(index);
+      }
+    });
+
+    if (!winner && filledBox.every((item) => item)) {
+      setWinner("Draw");
+    }
+  }, [turn, filledBox, winner]);
 
   useEffect(() => {
-    const hasWinner = winConditions.some((condition) => {
-      return (
-        condition.every((item) => {
-          return filledItems[item] === "X";
-        }) ||
-        condition.every((item) => {
-          return filledItems[item] === "O";
-        })
-      );
-    });
-
-    console.log(hasWinner);
-
-    const isDraw = filledItems.every((item) => {
-      return item === "X" || item === "O";
-    });
-
-    if (hasWinner) {
-      if (currentTurn === "X") {
-        setStatus("X_WON");
+    if (winner && winner !== "Draw" && lineIndex) {
+      if ([0, 1, 2].includes(lineIndex)) {
+        animation.start("animateWidth");
       } else {
-        setStatus("O_WON");
+        animation.start("animateHeight");
       }
-      return confetti.onOpen();
-    } else if (isDraw) {
-      setStatus("DRAW");
-    } else {
-      currentTurn === "X" ? setCurrentTurn("O") : setCurrentTurn("X");
+      animation.start("buttonAnimation");
     }
-  }, [filledItems, confetti, currentTurn, winConditions]);
+  }, [animation, winner, lineIndex]);
 
-  const handleClick = (index: number) => {
-    if (filledItems[index]) return;
-    const updatedItems = [...filledItems];
-    updatedItems[index] = currentTurn;
-    setFilledItems(updatedItems);
+  const handleReset = () => {
+    setFilledBox(initialBoxes);
+    setWinner(undefined);
+    setTurn("X");
+    animation.start("initial");
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center">
-      <div
-        className={cn(
-          "relative grid grid-cols-3",
-          status && "pointer-events-none"
-        )}
-      >
+    <div className="h-full flex flex-col gap-10 items-center justify-center">
+      <div className="relative overflow-hidden grid grid-cols-3">
         {Array.from({ length: 9 }).map((_, index) => (
           <div
             onClick={() => handleClick(index)}
             key={index}
             className={cn(
-              "border-2 border-neutral-600 relative group h-20 w-20 flex items-center justify-center",
-              index <= 2 && "border-t-0",
-              index >= 6 && "border-b-0",
-              index % 3 === 0 && "border-l-0",
-              index % 3 === 2 && "border-r-0",
-              filledItems[index] && "cursor-not-allowed"
+              "relative cursor-pointer group grid place-items-center border-[2px] border-neutral-700 h-[100px] w-[100px]",
+              [0, 1, 2].includes(index) && "border-t-0",
+              [0, 3, 6].includes(index) && "border-l-0",
+              [6, 7, 8].includes(index) && "border-b-0",
+              [2, 5, 8].includes(index) && "border-r-0",
+              (filledBox[index] || winner) && "hover:cursor-not-allowed"
             )}
           >
             <X
               className={cn(
-                "opacity-0",
-                filledItems[index] === "X" && "opacity-100",
-                currentTurn === "X" &&
-                  !filledItems[index] &&
-                  "group-hover:opacity-30"
+                "hidden transition-colors",
+                turn === "X" &&
+                  !filledBox[index] &&
+                  !winner &&
+                  "group-hover:block group-hover:bg-neutral-300",
+                filledBox[index] === "X" && "block bg-neutral-800"
               )}
             />
             <O
               className={cn(
-                "opacity-0",
-                filledItems[index] === "O" && "opacity-100",
-                currentTurn === "O" &&
-                  !filledItems[index] &&
-                  "group-hover:opacity-30"
+                "hidden transition-colors",
+                turn === "O" &&
+                  !filledBox[index] &&
+                  !winner &&
+                  "group-hover:block group-hover:border-neutral-300",
+                filledBox[index] === "O" && "block border-neutral-800"
               )}
             />
           </div>
         ))}
-        <div
+        <motion.span
           className={cn(
-            "w-0 h-2.5 bg-red-500 absolute top-1/2 -translate-y-1/2 left-0 rotate-45 transition duration-1000",
-            status && "w-full"
+            "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-[400px] bg-red-500/80",
+            lineIndex === 0 && "w-full h-1.5 top-[16.2%]",
+            lineIndex === 1 && "w-full h-1.5 top-1/2 -translate-y-1/2",
+            lineIndex === 2 && "w-full h-1.5 top-[83.5%]",
+            lineIndex === 3 && "h-full w-1.5 left-[16.2%]",
+            lineIndex === 5 && "h-full w-1.5 left-[83.5%]",
+            lineIndex === 6 && "-rotate-45",
+            lineIndex === 7 && "rotate-45"
           )}
+          variants={{
+            initial: { height: 0, width: 0 },
+            animateWidth: { width: 400, height: 6 },
+            animateHeight: { height: 400, width: 6 },
+          }}
+          initial="initial"
+          animate={animation}
         />
       </div>
-    </main>
+      <h1 className="font-bold text-5xl">
+        {winner === "X"
+          ? "X Won"
+          : winner === "O"
+          ? "O Won"
+          : winner === "Draw"
+          ? "Draw"
+          : `${turn} Turn`}
+      </h1>
+      <motion.div
+        variants={{
+          initial: { pointerEvents: "none", opacity: 0, y: -30 },
+          buttonAnimation: { pointerEvents: "auto", opacity: 100, y: 0 },
+        }}
+        initial="initial"
+        animate={animation}
+      >
+        <Button onClick={handleReset}>Reset</Button>
+      </motion.div>
+    </div>
   );
-}
+};
+
+const X = ({ className }: { className?: string }) => {
+  return (
+    <>
+      <span
+        className={cn(
+          "h-16 w-2.5 bg-neutral-700 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rotate-45",
+          className
+        )}
+      />
+      <span
+        className={cn(
+          "h-16 w-2.5 bg-neutral-700 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-45",
+          className
+        )}
+      />
+    </>
+  );
+};
+
+const O = ({ className }: { className?: string }) => {
+  return (
+    <span
+      className={cn(
+        "h-16 w-16 rounded-full border-[10px] border-neutral-700 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
+        className
+      )}
+    />
+  );
+};
+
+export default Page;

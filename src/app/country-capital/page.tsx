@@ -2,19 +2,18 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { motion, useAnimation } from "framer-motion";
+import { RefreshCcw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { countryData } from "./config";
-import { motion, useAnimation } from "framer-motion";
-import { Separator } from "@/components/ui/separator";
-import { RefreshCcw } from "lucide-react";
 
 const CountrycityPage = () => {
   const [correct, setCorrect] = useState(0);
-  const [wrong, setWrong] = useState(0);
   const [pair, setPair] = useState<string[]>([]);
   const [wrongPair, setWrongPair] = useState<string[]>([]);
   const [mount, setMount] = useState(false);
   const animation = useAnimation();
+  const COUNTRY_LENGTH = 8;
 
   const generateRandomIndexes = ({
     max,
@@ -40,7 +39,7 @@ const CountrycityPage = () => {
     let array: string[] = [];
     let randomIndexes = generateRandomIndexes({
       max: countryData.length,
-      min: 8,
+      min: COUNTRY_LENGTH,
     });
     const objects = countryData.filter((_, index) => {
       return randomIndexes.includes(index);
@@ -75,20 +74,27 @@ const CountrycityPage = () => {
   useEffect(() => {
     if (!mount) setMount(true);
     if (pair.length !== 2) return;
-    setTimeout(() => {
+    const timeout = setTimeout(() => {
       if (isCorrect()) {
         setData((prev) => ({
           ...prev,
-          array: data.array.filter((item) => !pair.includes(item)),
+          array: prev.array.filter((item) => !pair.includes(item)),
         }));
         setCorrect(correct + 1);
       } else {
-        setWrong(wrong + 1);
-        setWrongPair((prev) => [...prev, ...pair]);
+        data.objects
+          .filter((o) => {
+            return pair.includes(o.country) || pair.includes(o.city);
+          })
+          .map((item) => {
+            return setWrongPair((prev) => [...prev, item.city, item.country]);
+          });
       }
       setPair([]);
     }, 300);
-  }, [pair, isCorrect, mount, data.array, correct, wrong]);
+
+    return () => clearTimeout(timeout);
+  }, [pair, isCorrect, mount, data, correct, wrongPair]);
 
   useEffect(() => {
     if (data && !data.array.length) {
@@ -106,18 +112,29 @@ const CountrycityPage = () => {
     setPair((prev) => [...prev, item]);
   };
 
+  useEffect(() => {
+    if (wrongPair.length === data.array.length) {
+      setData((prev) => ({
+        ...prev,
+        array: [],
+      }));
+    }
+  }, [data.array.length, wrongPair.length]);
+
   const handleReset = () => {
     setData(getGameData());
     setCorrect(0);
-    setWrong(0);
     setWrongPair([]);
     animation.start("reset");
   };
 
   function calculateAccuracy() {
-    const totalAnswers = correct + wrong;
+    const totalAnswers = correct + wrongPair.length / 2;
+    if (totalAnswers === 0) {
+      return 0;
+    }
     const accuracy = (correct / totalAnswers) * 100;
-    return accuracy.toFixed(2) + "%";
+    return accuracy.toFixed(2) || 0;
   }
 
   if (!mount) {
@@ -134,17 +151,14 @@ const CountrycityPage = () => {
         transition={{ duration: 0.5 }}
         initial="reset"
         animate={animation}
-        className="flex flex-col gap-5"
+        className="flex flex-col items-center gap-5"
       >
-        <section className="flex items-center gap-5">
-          <p className="font-semibold text-lg text-muted-foreground">
-            Correct: <span className="text-green-500 font-bold">{correct}</span>
-          </p>
-          <Separator orientation="vertical" className="h-8" />
-          <p className="font-semibold text-lg text-muted-foreground">
-            Wrong: <span className="text-red-500 font-bold">{wrong}</span>
-          </p>
-        </section>
+        <p className="font-semibold text-lg text-muted-foreground">
+          Score:{" "}
+          <span className="text-green-500 font-bold">
+            {calculateAccuracy()}%
+          </span>
+        </p>
         <motion.div
           variants={{
             reset: { display: "none", y: -50, opacity: 0 },
@@ -159,15 +173,9 @@ const CountrycityPage = () => {
           initial="reset"
           animate={animation}
         >
-          <div className="flex flex-col gap-5">
-            <p className="font-semibold text-xl text-muted-foreground">
-              accuracy:{" "}
-              <span className="text-blue-500">{calculateAccuracy()}</span>
-            </p>
-            <Button size="sm" onClick={handleReset} className="w-full">
-              Play Again
-            </Button>
-          </div>
+          <Button size="sm" onClick={handleReset} className="w-full">
+            Play Again
+          </Button>
         </motion.div>
       </motion.div>
       <section className="flex flex-wrap justify-center gap-3">
@@ -179,7 +187,8 @@ const CountrycityPage = () => {
             className={cn(
               pair.includes(item) && "ring-[2px] ring-primary",
               isCorrect() && pair.includes(item) && "ring-[2px] ring-green-500",
-              wrongPair.includes(item) && "ring-[2px] ring-red-500"
+              wrongPair.includes(item) &&
+                "ring-[2px] ring-red-500 pointer-events-none opacity-70"
             )}
           >
             {item}

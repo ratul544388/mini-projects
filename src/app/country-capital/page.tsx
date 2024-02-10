@@ -77,8 +77,8 @@ const CountrycapitalPage = () => {
     }: { totalCountries?: number; pickedCountries?: number } = {}) => {
       let array: string[] = [];
       let randomIndexes = generateRandomIndexes({
-        max: totalCountries || 60,
-        min: pickedCountries || 6,
+        max: totalCountries || 30,
+        min: pickedCountries || 5,
       });
       const objects = countryData.filter((_, index) => {
         return randomIndexes.includes(index);

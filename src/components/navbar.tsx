@@ -35,7 +35,7 @@ export const Navbar = () => {
     </Button>
   );
   return (
-    <div className="h-[70px] bg-background flex items-center justify-between pl-6 pr-20 border">
+    <div className="h-[70px] bg-background flex items-center justify-between px-6 border">
       <h3 className="font-bold text-xl bg-gradient-to-r from-sky-500 via-indigo-500 to-blue-600 text-transparent bg-clip-text">
         Mini Games Online
       </h3>

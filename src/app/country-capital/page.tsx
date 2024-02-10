@@ -183,12 +183,17 @@ const CountrycapitalPage = () => {
     setData(getGameData());
     setCorrect(0);
     setWrong(0);
+    setPair([]);
     animation.start("reset");
     setScoreBoard([]);
   };
 
   const menuTrigger = (
-    <Button variant="outline" size="icon" className="focus:ring-1 focus:ring-primary">
+    <Button
+      variant="outline"
+      size="icon"
+      className="focus:ring-1 focus:ring-primary"
+    >
       <MenuIcon />
     </Button>
   );
@@ -271,7 +276,8 @@ const CountrycapitalPage = () => {
               !isCorrect() &&
                 pair.length === 2 &&
                 pair.includes(item) &&
-                "ring-[2px] ring-red-500"
+                "ring-[2px] ring-red-500",
+              pair.length === 2 && "pointer-events-none"
             )}
           >
             {item}

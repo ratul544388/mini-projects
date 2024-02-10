@@ -1,30 +1,37 @@
 "use client";
 
-import { words } from "@/constants";
-import { Keyboard } from "./_components/keyboard";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { cn } from "@/lib/utils";
-import { Drawing } from "./_components/drawing";
 import { Button } from "@/components/ui/button";
 import { useConfettiStore } from "@/hooks/use-confetti-store";
-import { AnimatePresence, animate, motion, useAnimation } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { AnimatePresence, motion, useAnimation } from "framer-motion";
+import { useCallback, useEffect, useState } from "react";
+import { Drawing } from "./_components/drawing";
+import { Keyboard } from "./_components/keyboard";
+import { data } from "./config";
 
 const HangmanPage = () => {
   const animation = useAnimation();
+
   const generateRandomWord = useCallback(() => {
-    const randomIndex = Math.floor(Math.random() * words.length);
-    return words[randomIndex];
+    const randomCategoryIndex = Math.floor(Math.random() * data.length);
+    const category = data[randomCategoryIndex];
+    const randomWordIndex = Math.floor(Math.random() * category.words.length);
+    const word = data[randomCategoryIndex].words[randomWordIndex].toUpperCase();
+    return { category: category.category, word };
   }, []);
 
   const { onOpen } = useConfettiStore();
   const [isMount, setIsMount] = useState(false);
-  const [word, setWord] = useState(generateRandomWord());
+  const [word, setWord] = useState<string>("");
+  const [category, setCategory] = useState<string>("");
   const [result, setResult] = useState<"WIN" | "LOSE">();
   const [pressedKeys, setPressedKeys] = useState<string[]>([]);
   const [chance, setChance] = useState(0);
 
   useEffect(() => {
-    generateRandomWord();
+    const { category, word } = generateRandomWord();
+    setWord(word);
+    setCategory(category);
     setIsMount(true);
   }, [generateRandomWord]);
 
@@ -53,9 +60,11 @@ const HangmanPage = () => {
   }, [pressedKeys, word, chance, onOpen, animation]);
 
   const onReset = () => {
+    const { word, category } = generateRandomWord();
     animation.start("hidden");
     setResult(undefined);
-    setWord(generateRandomWord);
+    setWord(word);
+    setCategory(category);
     setChance(0);
     setPressedKeys([]);
   };
@@ -66,6 +75,11 @@ const HangmanPage = () => {
 
   return (
     <div className="flex flex-col items-center justify-center h-full gap-5">
+      <p className="font-semibold text-xl text-muted-foreground">
+        Guess{" "}
+        {["A", "E", "O", "I", "U"].includes(category.charAt(0)) ? "an " : "a "}
+        <span className="text-primary">{category}</span> name
+      </p>
       <Drawing chance={chance} />
       <div className="flex gap-1 text-3xl font-bold text-gray-700">
         {word.split("").map((char, index) => (
@@ -121,6 +135,9 @@ const HangmanPage = () => {
                 {result === "WIN" ? "You Servived!" : "You Lost!"}
               </span>
             </h3>
+            <p className="font-medium">
+              Correct word was: <span className="text-primary">{word}</span>
+            </p>
             <Button onClick={onReset}>Play again</Button>
           </motion.div>
         </motion.div>

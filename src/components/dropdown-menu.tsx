@@ -1,8 +1,7 @@
 "use client";
 import { cn } from "@/lib/utils";
 import { motion, useAnimation } from "framer-motion";
-import { LucideIcon, MoreHorizontal } from "lucide-react";
-import { Button } from "./ui/button";
+import { LucideIcon } from "lucide-react";
 import { ReactNode } from "react";
 import { IconType } from "react-icons";
 interface DropdownMenuProps {
@@ -28,13 +27,11 @@ export const DropdownMenu = ({
           variants={{
             hidden: {
               height: 0,
-              width: 0,
               opacity: 0,
               pointerEvents: "none",
             },
             visible: {
               height: "auto",
-              width: "auto",
               opacity: 1,
               pointerEvents: "auto",
             },

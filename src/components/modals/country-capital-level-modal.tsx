@@ -14,25 +14,31 @@ export const CountryCapitalLevelModal = () => {
   const levels: GameLevelType[] = [
     {
       title: "Easy",
-      description: "Easy: (60 Popular + 6 Total)",
-      totalCountries: 60,
+      description: "Easy: (30 Popular + 5 Total)",
+      totalCountries: 30,
+      pickedCountries: 5,
+    },
+    {
+      title: "Medium",
+      description: "Medium: (50 Popular + 6 Total)",
+      totalCountries: 50,
       pickedCountries: 6,
     },
     {
       title: "Hard",
-      description: "Hard: (80 Popular + 8 Total)",
+      description: "Hard (80 Popular + 8 Total)",
       totalCountries: 80,
       pickedCountries: 8,
     },
     {
       title: "Insane",
-      description: "Insane (120 Popular + 10 Total)",
-      totalCountries: 120,
+      description: "Insane (130 Popular + 10 Total)",
+      totalCountries: 130,
       pickedCountries: 10,
     },
     {
-      title: "Legend",
-      description: "Legend (110 countries + 10 Total)",
+      title: "Impossible",
+      description: "Impossible (210 countries + 10 Total)",
       totalCountries: 210,
       pickedCountries: 10,
     },

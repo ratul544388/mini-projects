@@ -188,7 +188,7 @@ const CountrycapitalPage = () => {
   };
 
   const menuTrigger = (
-    <Button variant="outline" size="icon">
+    <Button variant="outline" size="icon" className="focus:ring-1 focus:ring-primary">
       <MenuIcon />
     </Button>
   );
@@ -278,7 +278,7 @@ const CountrycapitalPage = () => {
           </Button>
         ))}
       </section>
-      <div className="fixed top-4 right-4">
+      <div className="absolute top-4 right-4">
         <DropdownMenu
           trigger={menuTrigger}
           items={[
